@@ -15,16 +15,23 @@ fn calc_rotation(starting_value: i32) -> Result<u32, Box<dyn Error>> {
     for line in reader.lines() {
         let l = line?;
         let (direction, step_str) = l.split_at(1);
-        let step: i32 = step_str.parse()?;
+        let mut step: i32 = step_str.parse()?;
 
-        match direction {
-            "L" => value -= step,
-            "R" => value += step,
-            _ => return Err("Invalid direction".into()),
-        }
-
-        if value % 100 == 0 {
-            count += 1;
+        while step != 0 {
+            match direction {
+                "L" => {
+                    value -= 1;
+                    step -= 1;
+                }
+                "R" => {
+                    value += 1;
+                    step -= 1;
+                }
+                _ => return Err("Invalid direction".into()),
+            }
+            if value % 100 == 0 {
+                count += 1;
+            }
         }
     }
 
