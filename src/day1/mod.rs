@@ -15,27 +15,34 @@ fn calc_rotation(starting_value: i32) -> Result<u32, Box<dyn Error>> {
     for line in reader.lines() {
         let l = line?;
         let (direction, step_str) = l.split_at(1);
-        let mut step: i32 = step_str.parse()?;
-
-        while step != 0 {
-            match direction {
-                "L" => {
-                    value -= 1;
-                    step -= 1;
-                }
-                "R" => {
-                    value += 1;
-                    step -= 1;
-                }
-                _ => return Err("Invalid direction".into()),
-            }
-            if value % 100 == 0 {
-                count += 1;
-            }
-        }
+        let step = step_str.parse()?;
+        move_steps(&mut value, &mut count, step, direction);
     }
-
     Ok(count)
+}
+
+fn move_steps(value: &mut i32, count: &mut u32, step: i32, direction: &str) {
+    let prev = *value;
+    match direction {
+        "L" => *value -= step,
+        "R" => *value += step,
+        _ => unreachable!("Can't be reached"),
+    }
+    // If the sign swapped, 0 was hit
+    if (*value < 0 && prev > 0) || (*value > 0 && prev < 0) {
+        *count += 1;
+    }
+    // If the dial is at 0, a count is added
+    if *value == 0 {
+        *count += 1;
+    }
+    // Rotations can be >100, check how many rotations occurred
+    if value.abs() >= 100 {
+        let (q, r) = (*value / 100, *value % 100);
+        *count += q.abs() as u32;
+        *value = r;
+    }
+    *value = value.rem_euclid(100);
 }
 
 fn read_input() -> Result<BufReader<File>, Box<dyn Error>> {
