@@ -31,10 +31,11 @@ fn parse_intervals(input: &str) -> Result<Vec<Interval>, Box<dyn Error>> {
         .split(",")
         .map(|s| s.trim())
         .map(|interval| {
-            let mut parts = interval.split("-");
-            let start = parts.next().unwrap().parse::<i64>()?;
-            let end = parts.next().unwrap().parse::<i64>()?;
-            Ok(Interval { start, end })
+            let (start, end) = interval.split_once("-").ok_or("Invalid interval")?;
+            Ok(Interval {
+                start: start.parse()?,
+                end: end.parse()?,
+            })
         })
         .collect()
 }
@@ -44,18 +45,17 @@ fn sum_invalid_ids(intervals: Vec<Interval>) -> i64 {
     for interval in intervals {
         for i in interval.start..=interval.end {
             let i_str = i.to_string();
-            let i_len = i_str.len();
-
-            let mid = i_len / 2;
-            let first_half = &i_str[..mid];
-            let second_half = &i_str[mid..];
-
-            if first_half == second_half {
-                sum += i
+            if is_invalid_id(&i_str) {
+                sum += i;
             }
         }
     }
     sum
+}
+
+fn is_invalid_id(id: &str) -> bool {
+    let mid = id.len() / 2;
+    id[..mid] == id[mid..]
 }
 
 #[cfg(test)]
