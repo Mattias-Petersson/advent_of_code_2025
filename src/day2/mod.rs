@@ -54,8 +54,21 @@ fn sum_invalid_ids(intervals: Vec<Interval>) -> i64 {
 }
 
 fn is_invalid_id(id: &str) -> bool {
-    let mid = id.len() / 2;
-    id[..mid] == id[mid..]
+    for pattern_len in 1..=(id.len() / 2) {
+        if id.len() % pattern_len != 0 {
+            continue;
+        }
+        let sub_pattern: &str = &id[..pattern_len];
+        if id
+            .chars()
+            .collect::<Vec<_>>()
+            .chunks(pattern_len)
+            .all(|chunk| chunk.iter().collect::<String>() == sub_pattern)
+        {
+            return true;
+        }
+    }
+    false
 }
 
 #[cfg(test)]
@@ -67,7 +80,7 @@ mod tests {
         let input = "11-22,95-115,998-1012,1188511880-1188511890,222220-222224,1698522-1698528,446443-446449,38593856-38593862,565653-565659,824824821-824824827,2121212118-2121212124";
         let intervals = parse_intervals(input).unwrap();
         let result = sum_invalid_ids(intervals);
-        assert_eq!(result, 1227775554);
+        assert_eq!(result, 4174379265);
     }
 
     #[test]
