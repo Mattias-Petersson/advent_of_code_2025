@@ -1,8 +1,6 @@
-use std::{
-    error::Error,
-    fs::File,
-    io::{BufReader, Read},
-};
+use std::{error::Error, io::Read};
+
+use advent_of_code_2025::read_input;
 
 struct Interval {
     start: i64,
@@ -20,7 +18,7 @@ pub fn exercise() {
 }
 
 fn read_intervals() -> Result<Vec<Interval>, Box<dyn Error>> {
-    let mut reader = read_input()?;
+    let mut reader = read_input("day2")?;
     let mut input_str = String::new();
     reader.read_to_string(&mut input_str)?;
     parse_intervals(&input_str)
@@ -90,9 +88,4 @@ mod tests {
         let result = sum_invalid_ids(intervals);
         assert_eq!(result, 33);
     }
-}
-
-fn read_input() -> Result<BufReader<File>, Box<dyn Error>> {
-    let file = File::open("src/day2/input.txt")?;
-    Ok(BufReader::new(file))
 }
