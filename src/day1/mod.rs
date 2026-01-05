@@ -1,6 +1,7 @@
 use std::error::Error;
-use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::io::BufRead;
+
+use advent_of_code_2025::read_input;
 
 pub fn exercise() {
     let starting_value = 50;
@@ -11,7 +12,7 @@ pub fn exercise() {
 fn calc_rotation(starting_value: i32) -> Result<u32, Box<dyn Error>> {
     let mut value: i32 = starting_value;
     let mut count = 0;
-    let reader = read_input()?;
+    let reader = read_input("day1")?;
     for line in reader.lines() {
         let l = line?;
         let (direction, step_str) = l.split_at(1);
@@ -43,9 +44,4 @@ fn move_steps(value: &mut i32, count: &mut u32, step: i32, direction: &str) {
         *value = r;
     }
     *value = value.rem_euclid(100);
-}
-
-fn read_input() -> Result<BufReader<File>, Box<dyn Error>> {
-    let file = File::open("src/day1/input.txt")?;
-    Ok(BufReader::new(file))
 }
