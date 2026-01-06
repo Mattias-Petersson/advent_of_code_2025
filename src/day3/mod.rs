@@ -1,9 +1,34 @@
+use std::{error::Error, io::BufRead};
+
+use advent_of_code_2025::read_input;
+
 pub fn exercise() {
-    unimplemented!();
+    match get_batteries() {
+        Ok(batteries) => {
+            let sum: u32 = batteries.iter().map(|b| get_largest_joltage(b)).sum();
+            println!("{}", sum);
+        }
+        Err(e) => eprintln!("Error {e}"),
+    }
 }
 
-fn get_largest_joltage(batteries: &str) -> i32 {
-    0
+fn get_batteries() -> Result<Vec<String>, Box<dyn Error>> {
+    let input = read_input("day3")?;
+    let res = input.lines().collect::<Result<Vec<String>, _>>()?;
+    Ok(res)
+}
+
+fn get_largest_joltage(batteries: &str) -> u32 {
+    let mut best_pair = 0;
+    let mut best_first = 0;
+
+    for c in batteries.chars() {
+        let d = c.to_digit(10).unwrap();
+        best_pair = best_pair.max(best_first * 10 + d);
+        best_first = best_first.max(d);
+    }
+
+    best_pair
 }
 #[cfg(test)]
 mod tests {
