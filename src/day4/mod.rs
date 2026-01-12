@@ -1,4 +1,5 @@
 use std::{
+    collections::HashSet,
     fs::File,
     io::{BufRead, BufReader},
 };
@@ -7,9 +8,29 @@ use advent_of_code_2025::read_input;
 
 pub fn exercise() {
     let input = read_input("day4").unwrap();
-    let grid = input_to_grid(input);
-    let no_accessible = calculate_accessible(&grid);
-    println!("{}", no_accessible);
+    let mut grid = input_to_grid(input);
+    let mut haybale_positions = save_positions(&grid);
+    let mut count = 0;
+    let size = (grid.len(), grid[0].len());
+
+    loop {
+        let removable: Vec<(usize, usize)> = haybale_positions
+            .iter()
+            .filter(|&&pos| check_neighbors(&grid, pos, size))
+            .copied()
+            .collect();
+
+        if removable.is_empty() {
+            break;
+        }
+        count += removable.len();
+        for p in removable {
+            haybale_positions.remove(&p);
+            grid[p.0][p.1] = '.';
+        }
+    }
+
+    println!("{}", count);
 }
 
 fn input_to_grid(input: BufReader<File>) -> Vec<Vec<char>> {
@@ -22,16 +43,16 @@ fn input_to_grid(input: BufReader<File>) -> Vec<Vec<char>> {
         .collect()
 }
 
-fn calculate_accessible(grid: &Vec<Vec<char>>) -> u32 {
-    let mut count = 0;
+fn save_positions(grid: &Vec<Vec<char>>) -> HashSet<(usize, usize)> {
+    let mut positions = HashSet::new();
     for i in 0..grid.len() {
         for j in 0..grid[0].len() {
-            if check_neighbors(&grid, (i, j), (grid.len(), grid[0].len())) {
-                count += 1;
+            if grid[i][j] == '@' {
+                positions.insert((i, j));
             }
         }
     }
-    count
+    positions
 }
 
 fn check_neighbors(grid: &Vec<Vec<char>>, position: (usize, usize), size: (usize, usize)) -> bool {
@@ -71,7 +92,14 @@ mod tests {
         let file = File::open(format!("src/day4/example_input.txt")).unwrap();
         let reader = BufReader::new(file);
         let grid = input_to_grid(reader);
-        let no_accessible = calculate_accessible(&grid);
-        assert_eq!(no_accessible, 13);
+        let positions = save_positions(&grid);
+        let size = (grid.len(), grid[0].len());
+        let count = positions
+            .iter()
+            .filter(|&&pos| check_neighbors(&grid, pos, size))
+            .copied()
+            .collect::<Vec<(usize, usize)>>()
+            .len();
+        assert_eq!(count, 13);
     }
 }
