@@ -8,7 +8,7 @@ fn main() {
     let args = std::env::args().nth(1);
     if let Some(day) = args {
         let day: u32 = day.parse().unwrap();
-        if day > 0 && day < days_impl {
+        if day > 0 && day <= days_impl {
             println!("Running day {day}");
             run_day(day);
         }
