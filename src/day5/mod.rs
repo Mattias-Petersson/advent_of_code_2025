@@ -44,16 +44,9 @@ fn is_fresh(fresh_range: &FreshRange, id: u64) -> bool {
 }
 
 fn count_fresh(ids: Vec<u64>, fresh_ranges: Vec<FreshRange>) -> u32 {
-    let mut count = 0;
-    'outer: for id in ids {
-        for fresh_range in &fresh_ranges {
-            if is_fresh(&fresh_range, id) {
-                count += 1;
-                continue 'outer;
-            }
-        }
-    }
-    count
+    ids.iter()
+        .filter(|&id| fresh_ranges.iter().any(|range| is_fresh(range, *id)))
+        .count() as u32
 }
 #[cfg(test)]
 mod tests {
