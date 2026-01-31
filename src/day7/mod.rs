@@ -1,4 +1,8 @@
-use std::{collections::HashSet, error::Error, io::BufRead};
+use std::{
+    collections::{HashMap, HashSet},
+    error::Error,
+    io::BufRead,
+};
 
 use advent_of_code_2025::read_input;
 
@@ -45,6 +49,11 @@ fn split(pos: Position) -> Vec<Beam> {
 }
 
 pub fn exercise() {
+    println!("Splitters hit (part one): {}", part_one());
+    println!("Timelines created (part two): {}", part_two());
+}
+
+fn part_one() -> u32 {
     let input = get_input();
     let (mut beams, splitters, size) = parse_input(&input);
     let mut total_splitters_hit = 0;
@@ -54,7 +63,13 @@ pub fn exercise() {
             break;
         }
     }
-    println!("{}", total_splitters_hit);
+    total_splitters_hit
+}
+
+fn part_two() -> u64 {
+    let input = get_input();
+    let (beams, splitters, size) = parse_input(&input);
+    count_timelines(beams[0].position, &splitters, &size)
 }
 
 fn get_input() -> Vec<String> {
@@ -118,6 +133,53 @@ fn step_beams(beams: &mut Vec<Beam>, splitters: &HashSet<Position>, grid_size: &
     count_splitters_hit
 }
 
+fn count_timelines(start: Position, splitters: &HashSet<Position>, grid: &GridSize) -> u64 {
+    let mut current: HashMap<Position, u64> = HashMap::new();
+    current.insert(start, 1);
+
+    let mut completed = 0;
+
+    while !current.is_empty() {
+        let mut next: HashMap<Position, u64> = HashMap::new();
+
+        for (pos, count) in current {
+            let new = Position {
+                x: pos.x,
+                y: pos.y + 1,
+            };
+
+            if new.x >= grid.width || new.y >= grid.height {
+                completed += count;
+                continue;
+            }
+
+            if splitters.contains(&new) {
+                if new.x > 0 {
+                    *next
+                        .entry(Position {
+                            x: new.x - 1,
+                            y: new.y,
+                        })
+                        .or_insert(0) += count;
+                }
+
+                *next
+                    .entry(Position {
+                        x: new.x + 1,
+                        y: new.y,
+                    })
+                    .or_insert(0) += count;
+            } else {
+                *next.entry(new).or_insert(0) += count;
+            }
+        }
+
+        current = next;
+    }
+
+    completed
+}
+
 #[cfg(test)]
 mod tests {
     use std::{fs::File, io::BufReader};
@@ -143,5 +205,11 @@ mod tests {
             }
         }
         assert_eq!(count, 21)
+    }
+    #[test]
+    fn test_quantum_timelines() {
+        let input = setup();
+        let (start, splitters, grid) = parse_input(&input);
+        assert_eq!(count_timelines(start[0].position, &splitters, &grid), 40);
     }
 }
