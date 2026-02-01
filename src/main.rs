@@ -5,9 +5,10 @@ mod day4;
 mod day5;
 mod day6;
 mod day7;
+mod day8;
 
 fn main() {
-    let days_impl = 7;
+    let days_impl = 8;
     let args = std::env::args().nth(1);
     if let Some(day) = args {
         let day: u32 = day.parse().unwrap();
@@ -34,6 +35,7 @@ fn run_day(day: u32) {
         5 => day5::exercise(),
         6 => day6::exercise(),
         7 => day7::exercise(),
+        8 => day8::exercise(),
         _ => unimplemented!(),
     }
 }
