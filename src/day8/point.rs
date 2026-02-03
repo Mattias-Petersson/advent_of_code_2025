@@ -1,8 +1,5 @@
 use std::fmt::Debug;
-use std::{
-    error::Error,
-    ops::{Add, Mul, Sub},
-};
+use std::ops::{Add, Mul, Sub};
 
 #[derive(Eq, Hash, PartialEq, Debug)]
 pub struct Point<T> {
@@ -26,11 +23,9 @@ where
     }
 }
 
-pub fn points_squared_distance<T>(
-    points: &[Point<T>],
-) -> Result<Vec<(&Point<T>, &Point<T>, T)>, Box<dyn Error>>
+pub fn points_squared_distance<T>(points: &[Point<T>]) -> Vec<(&Point<T>, &Point<T>, T)>
 where
-    T: Copy + Debug + PartialOrd + Mul<Output = T> + Sub<Output = T> + Add<Output = T>,
+    T: Copy + Ord + Mul<Output = T> + Sub<Output = T> + Add<Output = T>,
 {
     let mut res = Vec::new();
     for (i, p1) in points.iter().enumerate() {
@@ -39,8 +34,8 @@ where
             res.push((p1, p2, dist));
         }
     }
-    res.sort_by(|a, b| a.2.partial_cmp(&b.2).unwrap());
-    Ok(res)
+    res.sort_by_key(|e| e.2);
+    res
 }
 
 #[cfg(test)]
@@ -49,7 +44,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_squared_difference() {
+    fn test_squared_distance() {
         let p1 = Point::new(162, 817, 812);
         let p2 = Point::new(425, 690, 689);
 
@@ -71,14 +66,26 @@ mod tests {
             Point::new(425, 690, 689),
             Point::new(984, 92, 344),
         ];
-        match points_squared_distance(&points) {
-            Ok(points_vec) => {
-                let &(p1, p2, shortest_dis) = points_vec.first().unwrap();
-                assert_eq!(p1, &points[0]);
-                assert_eq!(p2, &points[1]);
-                assert_eq!(shortest_dis, 100427);
-            }
-            Err(_) => todo!(),
-        }
+        let points_distance = points_squared_distance(&points);
+        let &(p1, p2, shortest_dis) = points_distance.first().unwrap();
+        assert_eq!(p1, &points[0]);
+        assert_eq!(p2, &points[1]);
+        assert_eq!(shortest_dis, 100427);
+    }
+
+    #[test]
+    fn test_find_closest_not_first() {
+        let points = vec![
+            Point::new(819, 987, 18),
+            Point::new(57, 618, 57),
+            Point::new(466, 668, 158),
+            Point::new(984, 92, 344),
+            Point::new(425, 690, 689),
+        ];
+        let points_distance = points_squared_distance(&points);
+        let &(p1, p2, shortest_dis) = points_distance.first().unwrap();
+        assert_eq!(p1, &points[1]);
+        assert_eq!(p2, &points[2]);
+        assert_eq!(shortest_dis, 179982);
     }
 }
