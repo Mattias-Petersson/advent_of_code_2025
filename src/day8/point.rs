@@ -30,6 +30,7 @@ where
     }
 }
 
+// TODO: This is O(n^2). Optimize this.
 pub fn points_squared_distance<T>(points: &[Point<T>]) -> Vec<(&Point<T>, &Point<T>, T)>
 where
     T: Copy + Ord + Mul<Output = T> + Sub<Output = T> + Add<Output = T>,

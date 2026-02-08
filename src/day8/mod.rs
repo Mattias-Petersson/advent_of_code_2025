@@ -7,16 +7,32 @@ use std::str::FromStr;
 use std::{error::Error, io::BufRead};
 
 use advent_of_code_2025::read_input;
-use point::{Point, PointCoord, PointMath};
+use point::{Point, PointCoord, PointMath, points_squared_distance};
 
 struct Circuit<'a, T> {
     connected_points: HashSet<&'a Point<T>>,
 }
 
+impl<'a, T> Circuit<'a, T>
+where
+    T: PointCoord,
+{
+    fn new(p1: &'a Point<T>, p2: &'a Point<T>) -> Self {
+        let mut points = HashSet::new();
+        points.insert(p1);
+        points.insert(p2);
+        Circuit {
+            connected_points: points,
+        }
+    }
+}
+
+// TODO: This file can be made more efficient with Unions. Look into.
 pub fn exercise() {
     let points: Vec<Point<i64>> = parse_input();
 
     part_one(&points);
+    part_two(&points);
 }
 
 fn parse_input<T>() -> Vec<Point<T>>
@@ -32,7 +48,7 @@ fn part_one<T>(points: &[Point<T>])
 where
     T: PointCoord,
 {
-    let points_distance = point::points_squared_distance(points);
+    let points_distance = points_squared_distance(points);
     let circuits = make_circuits(&points_distance, 1000);
     let res: usize = circuits
         .iter()
@@ -40,6 +56,54 @@ where
         .map(|c| c.connected_points.len())
         .product();
     println!("{:?}", res);
+}
+
+fn part_two<T>(points: &[Point<T>]) -> Option<T>
+where
+    T: PointCoord + std::fmt::Debug,
+{
+    let points_distance = points_squared_distance(points);
+
+    let mut circuits: Vec<Circuit<T>> = Vec::new();
+    let mut components = points.len();
+
+    let mut ans = None;
+
+    for (p1, p2, _) in points_distance.iter() {
+        let idx1 = find_circuit(&circuits, p1);
+        let idx2 = find_circuit(&circuits, p2);
+
+        match (idx1, idx2) {
+            (None, None) => {
+                circuits.push(Circuit::new(p1, p2));
+                components -= 1;
+            }
+            (Some(i), None) => {
+                circuits[i].connected_points.insert(*p2);
+                components -= 1;
+            }
+            (None, Some(j)) => {
+                circuits[j].connected_points.insert(*p1);
+                components -= 1;
+            }
+            (Some(i), Some(j)) if i != j => {
+                let (hi, lo) = if i > j { (i, j) } else { (j, i) };
+                let drained: Vec<_> = circuits[hi].connected_points.drain().collect();
+                circuits[lo].connected_points.extend(drained);
+                circuits.remove(hi);
+                components -= 1;
+            }
+            _ => continue,
+        }
+
+        if components == 1 {
+            ans = Some(p1.x * p2.x);
+            break;
+        }
+    }
+
+    println!("{:?}", ans);
+    ans
 }
 
 fn points_from_input<T>(input: &mut BufReader<File>) -> Result<Vec<Point<T>>, Box<dyn Error>>
@@ -83,12 +147,7 @@ where
 
         match (idx1, idx2) {
             (None, None) => {
-                let mut points = HashSet::new();
-                points.insert(*p1);
-                points.insert(*p2);
-                circuits.push(Circuit {
-                    connected_points: points,
-                });
+                circuits.push(Circuit::new(p1, p2));
             }
             (Some(i), None) => {
                 circuits[i].connected_points.insert(*p2);
@@ -111,8 +170,6 @@ where
 }
 #[cfg(test)]
 mod tests {
-    use std::{fs::File, io::BufReader};
-
     use super::*;
 
     fn setup() -> Vec<Point<i32>> {
@@ -124,7 +181,7 @@ mod tests {
     #[test]
     fn test_circuits() {
         let points = setup();
-        let points_distance = point::points_squared_distance(&points);
+        let points_distance = points_squared_distance(&points);
         let circuits = make_circuits(&points_distance, 10);
         let res: usize = circuits
             .iter()
@@ -132,5 +189,12 @@ mod tests {
             .map(|c| c.connected_points.len())
             .product();
         assert_eq!(res, 40);
+    }
+
+    #[test]
+    fn test_last_circuit() {
+        let points = setup();
+        let dist = part_two(&points).unwrap();
+        assert_eq!(dist, 25272);
     }
 }
