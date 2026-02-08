@@ -97,8 +97,8 @@ fn input_to_problems(input: BufReader<File>) -> Result<Vec<Problem>, Box<dyn Err
     for range in col_ranges {
         let mut numbers = Vec::new();
 
-        for row in 0..row_len - 1 {
-            let line = lines[row].as_bytes();
+        for s in lines.iter().take(row_len - 1) {
+            let line = s.as_bytes();
 
             let slice = if range.end <= line.len() {
                 &line[range.clone()]
@@ -141,7 +141,7 @@ mod tests {
     use super::*;
 
     fn setup() -> Result<Vec<Problem>, Box<dyn Error>> {
-        let file = File::open(format!("src/day6/example_input.txt")).unwrap();
+        let file = File::open("src/day6/example_input.txt").unwrap();
         let reader = BufReader::new(file);
 
         input_to_problems(reader)

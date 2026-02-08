@@ -40,7 +40,7 @@ fn move_steps(value: &mut i32, count: &mut u32, step: i32, direction: &str) {
     // Rotations can be >100, check how many rotations occurred
     if value.abs() >= 100 {
         let (q, r) = (*value / 100, *value % 100);
-        *count += q.abs() as u32;
+        *count += q.unsigned_abs();
         *value = r;
     }
     *value = value.rem_euclid(100);

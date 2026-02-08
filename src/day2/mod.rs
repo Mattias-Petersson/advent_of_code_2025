@@ -53,7 +53,7 @@ fn sum_invalid_ids(intervals: Vec<Interval>) -> i64 {
 
 fn is_invalid_id(id: &str) -> bool {
     for pattern_len in 1..=(id.len() / 2) {
-        if id.len() % pattern_len != 0 {
+        if !id.len().is_multiple_of(pattern_len) {
             continue;
         }
         let sub_pattern: &str = &id[..pattern_len];

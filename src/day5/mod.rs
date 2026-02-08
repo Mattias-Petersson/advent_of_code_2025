@@ -41,10 +41,10 @@ fn input_to_data(input: BufReader<File>) -> (Vec<u64>, Vec<FreshRange>) {
 }
 
 fn is_id_fresh(fresh_range: &FreshRange, id: u64) -> bool {
-    return fresh_range.low <= id && id <= fresh_range.high;
+    fresh_range.low <= id && id <= fresh_range.high
 }
 
-fn count_fresh(ids: Vec<u64>, fresh_ranges: &Vec<FreshRange>) -> u32 {
+fn count_fresh(ids: Vec<u64>, fresh_ranges: &[FreshRange]) -> u32 {
     ids.iter()
         .filter(|&id| fresh_ranges.iter().any(|range| is_id_fresh(range, *id)))
         .count() as u32
@@ -59,8 +59,8 @@ fn fresh_range_count(mut fresh_ranges: Vec<FreshRange>) -> u64 {
         high: fresh_ranges[0].high,
     };
 
-    for i in 1..fresh_ranges.len() {
-        let range = &fresh_ranges[i];
+    for s in fresh_ranges.iter().skip(1) {
+        let range = s;
         if range.low <= current.high + 1 {
             current.high = current.high.max(range.high);
         } else {
@@ -71,9 +71,8 @@ fn fresh_range_count(mut fresh_ranges: Vec<FreshRange>) -> u64 {
             };
         }
     }
-    merged.push(current); // Don't forget the last range
+    merged.push(current);
 
-    // Now sum up all the merged ranges
     merged.iter().map(|r| r.high - r.low + 1).sum()
 }
 #[cfg(test)]
@@ -83,7 +82,7 @@ mod tests {
     use super::*;
 
     fn setup() -> (Vec<u64>, Vec<FreshRange>) {
-        let file = File::open(format!("src/day5/example_input.txt")).unwrap();
+        let file = File::open("src/day5/example_input.txt").unwrap();
         let reader = BufReader::new(file);
         input_to_data(reader)
     }
