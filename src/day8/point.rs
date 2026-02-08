@@ -1,5 +1,12 @@
 use std::fmt::Debug;
+use std::hash::Hash;
 use std::ops::{Add, Mul, Sub};
+
+pub trait PointMath: Copy + Mul<Output = Self> + Sub<Output = Self> + Add<Output = Self> {}
+impl<T> PointMath for T where T: Copy + Mul<Output = T> + Sub<Output = T> + Add<Output = T> {}
+
+pub trait PointCoord: PointMath + Eq + Hash + Ord {}
+impl<T> PointCoord for T where T: PointMath + Eq + Hash + Ord {}
 
 #[derive(Eq, Hash, PartialEq, Debug)]
 pub struct Point<T> {
@@ -9,7 +16,7 @@ pub struct Point<T> {
 }
 impl<T> Point<T>
 where
-    T: Copy + Mul<Output = T> + Sub<Output = T> + Add<Output = T>,
+    T: PointMath,
 {
     pub fn new(x: T, y: T, z: T) -> Self {
         Point { x, y, z }

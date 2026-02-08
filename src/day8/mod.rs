@@ -7,19 +7,31 @@ use std::str::FromStr;
 use std::{error::Error, io::BufRead};
 
 use advent_of_code_2025::read_input;
-use point::Point;
+use point::{Point, PointCoord, PointMath};
 
 struct Circuit<'a, T> {
     connected_points: HashSet<&'a Point<T>>,
 }
 
 pub fn exercise() {
-    part_one();
+    let points: Vec<Point<i64>> = parse_input();
+
+    part_one(&points);
 }
 
-fn part_one() {
+fn parse_input<T>() -> Vec<Point<T>>
+where
+    T: FromStr + PointMath,
+    <T as FromStr>::Err: Error + 'static,
+{
     let mut input = read_input("day8").unwrap();
-    let points: Vec<Point<i64>> = points_from_input(&mut input).unwrap();
+    points_from_input(&mut input).unwrap()
+}
+
+fn part_one<T>(points: &[Point<T>])
+where
+    T: PointCoord,
+{
     let points_distance = point::points_squared_distance(&points);
     let circuits = make_circuits(&points_distance, 1000);
     let res: usize = circuits
@@ -49,7 +61,7 @@ where
 
 fn find_circuit<'a, T>(circuits: &[Circuit<T>], point: &Point<T>) -> Option<usize>
 where
-    T: std::hash::Hash + Eq + Copy,
+    T: PointCoord,
 {
     circuits
         .iter()
@@ -61,7 +73,7 @@ fn make_circuits<'a, T>(
     circuit_count: usize,
 ) -> Vec<Circuit<'a, T>>
 where
-    T: std::hash::Hash + Eq + Copy,
+    T: PointCoord,
 {
     let mut circuits: Vec<Circuit<'a, T>> = Vec::new();
     let v_iter = vec_points_distance.into_iter().take(circuit_count);
@@ -103,15 +115,15 @@ mod tests {
 
     use super::*;
 
-    fn setup() -> Result<Vec<Point<i32>>, Box<dyn Error>> {
-        let file = File::open(format!("src/day8/example_input.txt"))?;
+    fn setup() -> Vec<Point<i32>> {
+        let file = File::open(format!("src/day8/example_input.txt")).unwrap();
         let mut reader = BufReader::new(file);
 
-        points_from_input(&mut reader)
+        points_from_input(&mut reader).unwrap()
     }
     #[test]
     fn test_circuits() {
-        let points = setup().unwrap();
+        let points = setup();
         let points_distance = point::points_squared_distance(&points);
         let circuits = make_circuits(&points_distance, 10);
         let res: usize = circuits
