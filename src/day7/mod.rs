@@ -77,8 +77,8 @@ fn get_input() -> Vec<String> {
     input.lines().map(Result::unwrap).collect()
 }
 
-fn parse_input(input: &Vec<String>) -> (Vec<Beam>, HashSet<Position>, GridSize) {
-    let (beams, splitters) = find_start_and_splitters(&input).unwrap();
+fn parse_input(input: &[String]) -> (Vec<Beam>, HashSet<Position>, GridSize) {
+    let (beams, splitters) = find_start_and_splitters(input).unwrap();
     let size = GridSize {
         width: input.first().unwrap().len(),
         height: input.len(),
@@ -116,7 +116,7 @@ fn step_beams(beams: &mut Vec<Beam>, splitters: &HashSet<Position>, grid_size: &
     let mut new_beams = Vec::new();
     beams.retain_mut(|beam| {
         beam.step();
-        if beam.is_out_of_bounds(&grid_size) {
+        if beam.is_out_of_bounds(grid_size) {
             return false;
         }
         if splitters.contains(&beam.position) {
@@ -187,7 +187,7 @@ mod tests {
     use super::*;
 
     fn setup() -> Vec<String> {
-        let file = File::open(format!("src/day7/example_input.txt")).unwrap();
+        let file = File::open("src/day7/example_input.txt").unwrap();
         let reader = BufReader::new(file);
         reader.lines().map(Result::unwrap).collect()
     }

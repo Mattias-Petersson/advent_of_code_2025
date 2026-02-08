@@ -32,7 +32,7 @@ fn part_one<T>(points: &[Point<T>])
 where
     T: PointCoord,
 {
-    let points_distance = point::points_squared_distance(&points);
+    let points_distance = point::points_squared_distance(points);
     let circuits = make_circuits(&points_distance, 1000);
     let res: usize = circuits
         .iter()
@@ -59,7 +59,7 @@ where
     Ok(points)
 }
 
-fn find_circuit<'a, T>(circuits: &[Circuit<T>], point: &Point<T>) -> Option<usize>
+fn find_circuit<T>(circuits: &[Circuit<T>], point: &Point<T>) -> Option<usize>
 where
     T: PointCoord,
 {
@@ -76,7 +76,7 @@ where
     T: PointCoord,
 {
     let mut circuits: Vec<Circuit<'a, T>> = Vec::new();
-    let v_iter = vec_points_distance.into_iter().take(circuit_count);
+    let v_iter = vec_points_distance.iter().take(circuit_count);
     for (p1, p2, _) in v_iter {
         let idx1 = find_circuit(&circuits, p1);
         let idx2 = find_circuit(&circuits, p2);
@@ -116,7 +116,7 @@ mod tests {
     use super::*;
 
     fn setup() -> Vec<Point<i32>> {
-        let file = File::open(format!("src/day8/example_input.txt")).unwrap();
+        let file = File::open("src/day8/example_input.txt").unwrap();
         let mut reader = BufReader::new(file);
 
         points_from_input(&mut reader).unwrap()
