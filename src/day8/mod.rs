@@ -2,7 +2,6 @@ mod point;
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::BufReader;
-use std::ops::{Add, Mul, Sub};
 use std::str::FromStr;
 use std::{error::Error, io::BufRead};
 
@@ -108,7 +107,7 @@ where
 
 fn points_from_input<T>(input: &mut BufReader<File>) -> Result<Vec<Point<T>>, Box<dyn Error>>
 where
-    T: FromStr + Copy + Sub<Output = T> + Add<Output = T> + Mul<Output = T>,
+    T: FromStr + PointMath,
     <T as FromStr>::Err: Error + 'static,
 {
     let mut points = Vec::new();

@@ -7,35 +7,31 @@ mod day6;
 mod day7;
 mod day8;
 
+const DAYS: &[fn()] = &[
+    day1::exercise,
+    day2::exercise,
+    day3::exercise,
+    day4::exercise,
+    day5::exercise,
+    day6::exercise,
+    day7::exercise,
+    day8::exercise,
+];
+
 fn main() {
-    let days_impl = 8;
     let args = std::env::args().nth(1);
     if let Some(day) = args {
-        let day: u32 = day.parse().unwrap();
-        if day > 0 && day <= days_impl {
+        let day: usize = day.parse().unwrap();
+        if day > 0 && day <= DAYS.len() {
             println!("Running day {day}");
-            run_day(day);
+            DAYS[day - 1]();
         }
     } else {
         println!("Running all days");
-        for day in 1..=days_impl {
-            print!("Day {day}:");
-            run_day(day);
+        for (i, day_fn) in DAYS.iter().enumerate() {
+            println!("Day {}:", i + 1);
+            day_fn();
             println!();
         }
-    }
-}
-
-fn run_day(day: u32) {
-    match day {
-        1 => day1::exercise(),
-        2 => day2::exercise(),
-        3 => day3::exercise(),
-        4 => day4::exercise(),
-        5 => day5::exercise(),
-        6 => day6::exercise(),
-        7 => day7::exercise(),
-        8 => day8::exercise(),
-        _ => unimplemented!(),
     }
 }
