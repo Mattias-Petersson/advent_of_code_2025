@@ -6,6 +6,7 @@ mod day5;
 mod day6;
 mod day7;
 mod day8;
+mod day9;
 
 const DAYS: &[fn()] = &[
     day1::exercise,
@@ -16,6 +17,7 @@ const DAYS: &[fn()] = &[
     day6::exercise,
     day7::exercise,
     day8::exercise,
+    day9::exercise,
 ];
 
 fn main() {
