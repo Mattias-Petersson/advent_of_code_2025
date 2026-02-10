@@ -1,9 +1,14 @@
-use std::{error::Error, io::BufRead};
+use std::{collections::HashSet, error::Error, io::BufRead};
 
 use advent_of_code_2025::read_input;
 
 #[derive(Debug)]
 struct RedTile {
+    x: u64,
+    y: u64,
+}
+
+struct Coordinate {
     x: u64,
     y: u64,
 }
@@ -36,9 +41,10 @@ pub fn exercise() {
     ];
     find_largest_green_area(&mut res);
     // match read_red_tiles() {
-    //     Ok(res) => {
+    //     Ok(mut res) => {
     //         println!("Largest area is: {}", find_largest_area(&res));
-    //         let _r = find_largest_green_area(&res);
+    //         let _r = find_largest_green_area(&mut res);
+    //         println!("{}", _r);
     //     }
     //     Err(e) => eprintln!("Error: {e}"),
     // }
@@ -67,13 +73,8 @@ fn find_largest_area(points: &[RedTile]) -> u64 {
         .unwrap_or(0)
 }
 
-fn find_fill_lines(points: &mut Vec<RedTile>) {
-    let lines = find_line_segments(points);
-    points.append(&mut fill_line_segments(&lines));
-}
-
-fn find_line_segments(points: &[RedTile]) -> Vec<(&RedTile, &RedTile)> {
-    points
+fn find_fill_perimeter(points: &mut Vec<RedTile>) {
+    let t: Vec<(&RedTile, &RedTile)> = points
         .iter()
         .enumerate()
         .flat_map(|(i, p1)| {
@@ -83,10 +84,11 @@ fn find_line_segments(points: &[RedTile]) -> Vec<(&RedTile, &RedTile)> {
                 .filter(move |p2| p1.is_straight_line(p2))
                 .map(move |p2| (p1, p2))
         })
-        .collect()
+        .collect();
+    points.append(&mut fill_line_segments(&t));
 }
 
-fn fill_line_segments(lines: &Vec<(&RedTile, &RedTile)>) -> Vec<RedTile> {
+fn fill_line_segments(lines: &[(&RedTile, &RedTile)]) -> Vec<RedTile> {
     let mut res = Vec::new();
     for (p1, p2) in lines {
         if p1.x == p2.x {
@@ -106,13 +108,50 @@ fn fill_line_segments(lines: &Vec<(&RedTile, &RedTile)>) -> Vec<RedTile> {
     res
 }
 
-fn find_largest_green_area(points: &mut Vec<RedTile>) -> u64 {
-    println!("{}", points.len());
-    find_fill_lines(points);
-    println!("{}", points.len());
-    for p in points {
-        println!("{:?}", p);
+fn find_fill_inside_perimeter(points: &mut [RedTile]) -> HashSet<(u64, u64)> {
+    let min_x = points.iter().map(|p| p.x).min().unwrap();
+    let min_y = points.iter().map(|p| p.y).min().unwrap();
+    let max_x = points.iter().map(|p| p.x).max().unwrap();
+    let max_y = points.iter().map(|p| p.y).max().unwrap();
+    let mut points_coords = HashSet::new();
+    for point in points.iter() {
+        points_coords.insert((point.x, point.y));
     }
+    for x in min_x..=max_x {
+        for y in min_y..=max_y {
+            if is_inside_fence(
+                &points_coords,
+                Coordinate { x, y },
+                Coordinate { x: min_x, y: min_y },
+                Coordinate { x: max_x, y: max_y },
+            ) {
+                points_coords.insert((x, y));
+            }
+        }
+    }
+    points_coords
+}
+
+fn is_inside_fence(
+    grid: &HashSet<(u64, u64)>,
+    curr: Coordinate,
+    min: Coordinate,
+    max: Coordinate,
+) -> bool {
+    let has_left = (min.x..curr.x).any(|test_x| grid.contains(&(test_x, curr.y)));
+    let has_right = ((curr.x + 1)..=max.x).any(|test_x| grid.contains(&(test_x, curr.y)));
+    let has_above = (min.y..curr.y).any(|test_y| grid.contains(&(curr.x, test_y)));
+    let has_below = ((curr.y + 1)..=max.y).any(|test_y| grid.contains(&(curr.x, test_y)));
+
+    has_left && has_right && has_above && has_below
+}
+
+fn find_largest_green_area(points: &mut Vec<RedTile>) -> u64 {
+    find_fill_perimeter(points);
+    let point_coords = find_fill_inside_perimeter(points);
+
+    println!("{}", point_coords.len());
+    println!("Max {}", 0);
     0
 }
 
@@ -144,6 +183,13 @@ mod tests {
     fn test_largest_area() {
         let points = setup();
         assert_eq!(find_largest_area(&points), 50);
+    }
+
+    #[test]
+    fn test_perimeter_fill() {
+        let mut points = setup();
+        find_fill_perimeter(&mut points);
+        assert_eq!(find_fill_inside_perimeter(&mut points).len(), 46);
     }
 
     #[test]
