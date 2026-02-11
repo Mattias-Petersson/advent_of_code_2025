@@ -2,7 +2,7 @@ use std::{collections::HashSet, error::Error, io::BufRead};
 
 use advent_of_code_2025::read_input;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct RedTile {
     x: u64,
     y: u64,
@@ -29,25 +29,25 @@ impl RedTile {
 }
 
 pub fn exercise() {
-    let mut res = vec![
-        RedTile::new(7, 1),
-        RedTile::new(11, 1),
-        RedTile::new(11, 7),
-        RedTile::new(9, 7),
-        RedTile::new(9, 5),
-        RedTile::new(2, 5),
-        RedTile::new(2, 3),
-        RedTile::new(7, 3),
-    ];
-    find_largest_green_area(&mut res);
-    // match read_red_tiles() {
-    //     Ok(mut res) => {
-    //         println!("Largest area is: {}", find_largest_area(&res));
-    //         let _r = find_largest_green_area(&mut res);
-    //         println!("{}", _r);
-    //     }
-    //     Err(e) => eprintln!("Error: {e}"),
-    // }
+    // let mut res = vec![
+    //     RedTile::new(7, 1),
+    //     RedTile::new(11, 1),
+    //     RedTile::new(11, 7),
+    //     RedTile::new(9, 7),
+    //     RedTile::new(9, 5),
+    //     RedTile::new(2, 5),
+    //     RedTile::new(2, 3),
+    //     RedTile::new(7, 3),
+    // ];
+    // find_largest_green_area(&mut res);
+    match read_red_tiles() {
+        Ok(res) => {
+            println!("Largest area is: {}", find_largest_area(&res));
+            let _r = find_largest_green_area(&res);
+            println!("{}", _r);
+        }
+        Err(e) => eprintln!("Error: {e}"),
+    }
 }
 
 fn read_red_tiles() -> Result<Vec<RedTile>, Box<dyn Error>> {
@@ -73,63 +73,56 @@ fn find_largest_area(points: &[RedTile]) -> u64 {
         .unwrap_or(0)
 }
 
-fn find_fill_perimeter(points: &mut Vec<RedTile>) {
-    let t: Vec<(&RedTile, &RedTile)> = points
-        .iter()
-        .enumerate()
-        .flat_map(|(i, p1)| {
-            points
-                .iter()
-                .skip(i + 1)
-                .filter(move |p2| p1.is_straight_line(p2))
-                .map(move |p2| (p1, p2))
-        })
-        .collect();
-    points.append(&mut fill_line_segments(&t));
-}
+fn build_perimeter(points: &[RedTile]) -> HashSet<(u64, u64)> {
+    let mut res = HashSet::new();
 
-fn fill_line_segments(lines: &[(&RedTile, &RedTile)]) -> Vec<RedTile> {
-    let mut res = Vec::new();
-    for (p1, p2) in lines {
-        if p1.x == p2.x {
-            let start = p1.y.min(p2.y);
-            let end = p1.y.max(p2.y);
-            for y in start..=end {
-                res.push(RedTile { x: p1.x, y });
+    for (i, p1) in points.iter().enumerate() {
+        for p2 in points.iter().skip(i + 1) {
+            if !p1.is_straight_line(p2) {
+                continue;
             }
-        } else {
-            let start = p1.x.min(p2.x);
-            let end = p1.x.max(p2.x);
-            for x in start..=end {
-                res.push(RedTile { x, y: p1.y });
+
+            if p1.x == p2.x {
+                let start = p1.y.min(p2.y);
+                let end = p1.y.max(p2.y);
+                for y in start..=end {
+                    res.insert((p1.x, y));
+                }
+            } else {
+                let start = p1.x.min(p2.x);
+                let end = p1.x.max(p2.x);
+                for x in start..=end {
+                    res.insert((x, p1.y));
+                }
             }
         }
     }
+
     res
 }
 
-fn find_fill_inside_perimeter(points: &mut [RedTile]) -> HashSet<(u64, u64)> {
-    let min_x = points.iter().map(|p| p.x).min().unwrap();
-    let min_y = points.iter().map(|p| p.y).min().unwrap();
-    let max_x = points.iter().map(|p| p.x).max().unwrap();
-    let max_y = points.iter().map(|p| p.y).max().unwrap();
-    let mut points_coords = HashSet::new();
-    for point in points.iter() {
-        points_coords.insert((point.x, point.y));
-    }
+fn fill_inside_perimeter(perimeter: &HashSet<(u64, u64)>) -> HashSet<(u64, u64)> {
+    let min_x = perimeter.iter().map(|(x, _)| *x).min().unwrap();
+    let max_x = perimeter.iter().map(|(x, _)| *x).max().unwrap();
+    let min_y = perimeter.iter().map(|(_, y)| *y).min().unwrap();
+    let max_y = perimeter.iter().map(|(_, y)| *y).max().unwrap();
+
+    let mut filled = perimeter.clone();
+
     for x in min_x..=max_x {
         for y in min_y..=max_y {
             if is_inside_fence(
-                &points_coords,
+                &filled,
                 Coordinate { x, y },
                 Coordinate { x: min_x, y: min_y },
                 Coordinate { x: max_x, y: max_y },
             ) {
-                points_coords.insert((x, y));
+                filled.insert((x, y));
             }
         }
     }
-    points_coords
+
+    filled
 }
 
 fn is_inside_fence(
@@ -146,13 +139,35 @@ fn is_inside_fence(
     has_left && has_right && has_above && has_below
 }
 
-fn find_largest_green_area(points: &mut Vec<RedTile>) -> u64 {
-    find_fill_perimeter(points);
-    let point_coords = find_fill_inside_perimeter(points);
+fn find_largest_green_area(points: &[RedTile]) -> u64 {
+    let perimeter = build_perimeter(points);
+    println!("Got to filled perimeter");
+    let point_coords = fill_inside_perimeter(&perimeter);
+    println!("Filled inside the perimeter");
+    let mut max_area = u64::MIN;
+    'outer: for (i, p1) in points.iter().enumerate() {
+        for p2 in points.iter().skip(i + 1) {
+            if p1.area_bounds(p2) <= max_area {
+                continue;
+            }
+            let min_x = p1.x.min(p2.x);
+            let max_x = p1.x.max(p2.x);
+            let min_y = p1.y.min(p2.y);
+            let max_y = p1.y.max(p2.y);
 
-    println!("{}", point_coords.len());
-    println!("Max {}", 0);
-    0
+            for x_idx in min_x..=max_x {
+                for y_idx in min_y..=max_y {
+                    if !point_coords.contains(&(x_idx, y_idx)) {
+                        continue 'outer;
+                    }
+                }
+            }
+            let area = p1.area_bounds(p2);
+            max_area = max_area.max(area);
+        }
+    }
+
+    max_area
 }
 
 #[cfg(test)]
@@ -187,24 +202,14 @@ mod tests {
 
     #[test]
     fn test_perimeter_fill() {
-        let mut points = setup();
-        find_fill_perimeter(&mut points);
-        assert_eq!(find_fill_inside_perimeter(&mut points).len(), 46);
+        let points = setup();
+        let perimeter = build_perimeter(&points);
+        assert_eq!(fill_inside_perimeter(&perimeter).len(), 46);
     }
 
     #[test]
     fn test_largest_green_area() {
-        let mut points = setup();
-        let p1 = &points[1];
-        let p2 = &points[2];
-        println!(
-            "p1: {}, {} \np2: {}, {} \n Line segment: {}",
-            p1.x,
-            p1.y,
-            p2.x,
-            p2.y,
-            p1.is_straight_line(p2)
-        );
-        assert_eq!(find_largest_green_area(&mut points), 24);
+        let points = setup();
+        assert_eq!(find_largest_green_area(&points), 24);
     }
 }
