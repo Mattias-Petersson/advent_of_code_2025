@@ -8,11 +8,6 @@ struct RedTile {
     y: u64,
 }
 
-struct Coordinate {
-    x: u64,
-    y: u64,
-}
-
 impl RedTile {
     fn new(x: u64, y: u64) -> Self {
         RedTile { x, y }
@@ -22,29 +17,13 @@ impl RedTile {
         let dy = self.y.abs_diff(p.y) + 1;
         dx * dy
     }
-
-    fn is_straight_line(&self, p: &RedTile) -> bool {
-        self.x == p.x || self.y == p.y
-    }
 }
 
 pub fn exercise() {
-    // let mut res = vec![
-    //     RedTile::new(7, 1),
-    //     RedTile::new(11, 1),
-    //     RedTile::new(11, 7),
-    //     RedTile::new(9, 7),
-    //     RedTile::new(9, 5),
-    //     RedTile::new(2, 5),
-    //     RedTile::new(2, 3),
-    //     RedTile::new(7, 3),
-    // ];
-    // find_largest_green_area(&mut res);
     match read_red_tiles() {
         Ok(res) => {
             println!("Largest area is: {}", find_largest_area(&res));
-            let _r = find_largest_green_area(&res);
-            println!("{}", _r);
+            println!("Green area: {}", find_largest_green_area(&res));
         }
         Err(e) => eprintln!("Error: {e}"),
     }
@@ -76,29 +55,30 @@ fn find_largest_area(points: &[RedTile]) -> u64 {
 fn build_perimeter(points: &[RedTile]) -> HashSet<(u64, u64)> {
     let mut res = HashSet::new();
 
-    for (i, p1) in points.iter().enumerate() {
-        for p2 in points.iter().skip(i + 1) {
-            if !p1.is_straight_line(p2) {
-                continue;
-            }
+    for i in 0..points.len() {
+        let p1 = &points[i];
+        let p2 = &points[(i + 1) % points.len()];
 
-            if p1.x == p2.x {
-                let start = p1.y.min(p2.y);
-                let end = p1.y.max(p2.y);
-                for y in start..=end {
-                    res.insert((p1.x, y));
-                }
-            } else {
-                let start = p1.x.min(p2.x);
-                let end = p1.x.max(p2.x);
-                for x in start..=end {
-                    res.insert((x, p1.y));
-                }
-            }
-        }
+        add_line_segments(&mut res, &(p1.x, p1.y), &(p2.x, p2.y));
     }
 
     res
+}
+
+fn add_line_segments(res: &mut HashSet<(u64, u64)>, p1: &(u64, u64), p2: &(u64, u64)) {
+    if p1.0 == p2.0 {
+        let y_min = p1.1.min(p2.1);
+        let y_max = p1.1.max(p2.1);
+        for y in y_min..=y_max {
+            res.insert((p1.0, y));
+        }
+    } else {
+        let x_min = p1.0.min(p2.0);
+        let x_max = p1.0.max(p2.0);
+        for x in x_min..=x_max {
+            res.insert((x, p1.1));
+        }
+    }
 }
 
 fn fill_inside_perimeter(perimeter: &HashSet<(u64, u64)>) -> HashSet<(u64, u64)> {
@@ -113,9 +93,9 @@ fn fill_inside_perimeter(perimeter: &HashSet<(u64, u64)>) -> HashSet<(u64, u64)>
         for y in min_y..=max_y {
             if is_inside_fence(
                 &filled,
-                Coordinate { x, y },
-                Coordinate { x: min_x, y: min_y },
-                Coordinate { x: max_x, y: max_y },
+                RedTile { x, y },
+                RedTile { x: min_x, y: min_y },
+                RedTile { x: max_x, y: max_y },
             ) {
                 filled.insert((x, y));
             }
@@ -125,12 +105,7 @@ fn fill_inside_perimeter(perimeter: &HashSet<(u64, u64)>) -> HashSet<(u64, u64)>
     filled
 }
 
-fn is_inside_fence(
-    grid: &HashSet<(u64, u64)>,
-    curr: Coordinate,
-    min: Coordinate,
-    max: Coordinate,
-) -> bool {
+fn is_inside_fence(grid: &HashSet<(u64, u64)>, curr: RedTile, min: RedTile, max: RedTile) -> bool {
     let has_left = (min.x..curr.x).any(|test_x| grid.contains(&(test_x, curr.y)));
     let has_right = ((curr.x + 1)..=max.x).any(|test_x| grid.contains(&(test_x, curr.y)));
     let has_above = (min.y..curr.y).any(|test_y| grid.contains(&(curr.x, test_y)));
