@@ -17,23 +17,33 @@ const DAYS: &[fn()] = &[
     day6::exercise,
     day7::exercise,
     day8::exercise,
-    day9::exercise,
 ];
 
 fn main() {
-    let args = std::env::args().nth(1);
-    if let Some(day) = args {
-        let day: usize = day.parse().unwrap();
-        if day > 0 && day <= DAYS.len() {
-            println!("Running day {day}");
-            DAYS[day - 1]();
-        }
-    } else {
-        println!("Running all days");
-        for (i, day_fn) in DAYS.iter().enumerate() {
-            println!("Day {}:", i + 1);
-            day_fn();
-            println!();
+    if false {
+        let args = std::env::args().nth(1);
+        if let Some(day) = args {
+            let day: usize = day.parse().unwrap();
+            if day > 0 && day <= DAYS.len() {
+                println!("Running day {day}");
+                DAYS[day - 1]();
+            }
+        } else {
+            println!("Running all days");
+            for (i, day_fn) in DAYS.iter().enumerate() {
+                println!("Day {}:", i + 1);
+                day_fn();
+                println!();
+            }
         }
     }
+    run_day_nine_testing();
+}
+
+fn run_day_nine_testing() {
+    let input = day9::read_input().unwrap();
+    let large = day9::largest_area_between_all_points(&input);
+    println!("Largest: {large}");
+    let input_new = day9::add_inbetween_points(&input);
+    println!("{:?}", input_new);
 }
